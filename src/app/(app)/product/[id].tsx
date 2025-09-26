@@ -1,13 +1,13 @@
 import { Image, Text, View, TouchableOpacity } from "react-native";
-import { useLocalSearchParams, useRouter, Redirect, Link } from "expo-router"; // useRouter em vez de useNavigation
-import { fetchJson } from "@/utils/api";
+import { useLocalSearchParams, useRouter, Redirect, Link } from "expo-router";
 import { formatCurrency } from "@/utils/functions/format-currency";
 import { Button } from "@/components/button";
 import { Feather } from "@expo/vector-icons";
 import { useCartStore } from "@/stores/cart-store";
 import { useEffect, useState } from "react";
-import { Loading } from "@/components/loading"; // Importa o componente de Loading
-import { ProductProps } from "@/types/product"; // Usa sua tipagem forte
+import { Loading } from "@/components/loading";
+import { ProductProps } from "@/types/product";
+import { fetchProductById } from "@/utils/data/products";
 
 export default function Product() {
   const cartStore = useCartStore();
@@ -19,37 +19,36 @@ export default function Product() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchProduct() {
+    async function loadProduct() {
       try {
-        const { product: productData } = await fetchJson(`/products/${id}`);
-        
-        if (productData) {
-          // Garante que 'ingredients' seja sempre um array
-          const ingredientsArray = Array.isArray(productData.ingredients)
-            ? productData.ingredients
-            : [];
+        if (typeof id === 'string') {
+          const productData = await fetchProductById(id);
+          if (productData) {
+            // Garante que 'ingredients' seja sempre um array
+            const ingredientsArray = Array.isArray(productData.ingredients)
+              ? productData.ingredients
+              : [];
 
-          const mapped: ProductProps = {
-            id: productData._id,
-            title: productData.title,
-            description: productData.description || '',
-            price: productData.price,
-            thumbnail: productData.thumbnail ? { uri: productData.thumbnail } : (productData.cover ? { uri: productData.cover } : undefined),
-            cover: productData.cover ? { uri: productData.cover } : (productData.thumbnail ? { uri: productData.thumbnail } : undefined),
-            ingredients: ingredientsArray,
-          };
-          setProduct(mapped);
+            const mapped: ProductProps = {
+              id: productData.id,
+              title: productData.title,
+              description: productData.description || '',
+              price: productData.price,
+              thumbnail: productData.thumbnail ? { uri: productData.thumbnail } : (productData.cover ? { uri: productData.cover } : undefined),
+              cover: productData.cover ? { uri: productData.cover } : (productData.thumbnail ? { uri: productData.thumbnail } : undefined),
+              ingredients: ingredientsArray,
+            };
+            setProduct(mapped);
+          }
         }
       } catch (error) {
         console.error("Falha ao buscar produto:", error);
-        // Se der erro (ex: produto não encontrado), podemos redirecionar
-        // router.replace("/"); // Descomente se quiser redirecionar em caso de erro
       } finally {
         setIsLoading(false);
       }
     }
     
-    fetchProduct();
+    loadProduct();
   }, [id]);
 
   function handleAddToCart() {

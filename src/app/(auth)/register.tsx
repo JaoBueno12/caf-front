@@ -30,14 +30,14 @@ export default function Register() {
     }
     setIsLoading(true);
     try {
-      const data = await fetchJson("/register", {
+      const data = await fetchJson("/auth/register", {
         method: 'POST',
         body: JSON.stringify({ name, email, password }),
       });
 
       if (data.token && data.user) {
         setToken(data.token, data.user);
-        router.replace("../app/menu");
+        router.replace("../menu");
       } else {
         throw new Error("Resposta inválida do servidor");
       }
@@ -62,7 +62,7 @@ export default function Register() {
       >
         <View className="flex-1 bg-gray-100">
           <ImageBackground
-            source={{ uri: "https://images.unsplash.com/photo-1554118811-1e0d_58224f24" }}
+            source={{ uri: "https://images.unsplash.com/photo-1554118811-1e0d58224f24" }}
             className="flex-1"
             resizeMode="cover"
           />
@@ -119,7 +119,7 @@ export default function Register() {
           </TouchableOpacity>
           <Text className="text-gray-600 text-center text-sm">
             Já tem uma conta?{" "}
-            <Link href ="/login" className="text-orange-500 font-medium">
+            <Link href="/login" className="text-orange-500 font-medium">
               Faça login
             </Link>
           </Text>

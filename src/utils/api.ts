@@ -1,4 +1,4 @@
-export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.53.52.23:3001/api';
+export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export async function fetchJson(path: string, init?: RequestInit) {
   const res = await fetch(`${BASE_URL}${path}`, {

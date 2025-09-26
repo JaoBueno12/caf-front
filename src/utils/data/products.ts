@@ -1,4 +1,6 @@
-// Dados locais obsoletos – mantidos apenas como fallback opcional
+import { fetchJson } from '../api';
+
+// Dados locais como fallback caso a API não esteja disponível
 const MENU = [
   // Seção de bebidas
   {
@@ -125,4 +127,46 @@ const PRODUCTS = MENU.map((item) => item.data).flat();
 // Cria array com os nomes das categorias
 const CATEGORIES = MENU.map((item) => item.title);
 
+// Funções para buscar dados da API
+export async function fetchProducts() {
+  try {
+    const response = await fetchJson('/products');
+    return response.data;
+  } catch (error) {
+    console.warn('Erro ao buscar produtos da API, usando dados locais:', error);
+    return PRODUCTS;
+  }
+}
+
+export async function fetchProductById(id: string) {
+  try {
+    const response = await fetchJson(`/products/${id}`);
+    return response.data;
+  } catch (error) {
+    console.warn('Erro ao buscar produto da API, usando dados locais:', error);
+    return PRODUCTS.find(product => product.id === id);
+  }
+}
+
+export async function fetchCategories() {
+  try {
+    const response = await fetchJson('/products/categories');
+    return response.data;
+  } catch (error) {
+    console.warn('Erro ao buscar categorias da API, usando dados locais:', error);
+    return CATEGORIES;
+  }
+}
+
+export async function fetchProductsByCategory(category: string) {
+  try {
+    const response = await fetchJson(`/products/category/${category}`);
+    return response.data;
+  } catch (error) {
+    console.warn('Erro ao buscar produtos por categoria da API, usando dados locais:', error);
+    return PRODUCTS.filter(product => product.category === category);
+  }
+}
+
+// Exporta dados locais como fallback
 export { MENU, PRODUCTS, CATEGORIES };

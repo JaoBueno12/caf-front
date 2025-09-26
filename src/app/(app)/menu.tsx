@@ -1,11 +1,11 @@
 import { View, Text, FlatList, SectionList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; // NOVO: Importa SafeAreaView
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "@/components/header";
 import { CategoryButton } from "@/components/category-button";
 import { Product } from "@/components/products";
-import { CATEGORIES, MENU } from "@/utils/data/products";
+import { CATEGORIES, MENU, fetchProducts, fetchCategories } from "@/utils/data/products";
 import { ProductProps } from "@/types/product";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "expo-router";
 import { useCartStore } from "@/stores/cart-store";
 
@@ -13,17 +13,48 @@ export default function Menu() {
   const cartStore = useCartStore();
   const sectionListRef = useRef<SectionList<ProductProps>>(null);
 
-  // CORREÇÃO 1: Inicialização segura do estado da categoria
-  const [category, setCategory] = useState(CATEGORIES[0] || "");
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [products, setProducts] = useState<ProductProps[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const cartQuantyItems = cartStore.products.reduce(
     (total, product) => total + product.quantity,
     0
   );
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [categoriesData, productsData] = await Promise.all([
+        fetchCategories(),
+        fetchProducts()
+      ]);
+      
+      setCategories(categoriesData);
+      setProducts(productsData);
+      
+      if (categoriesData.length > 0) {
+        setCategory(categoriesData[0]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      // Fallback para dados locais
+      setCategories(CATEGORIES);
+      setProducts(MENU.map((item) => item.data).flat());
+      setCategory(CATEGORIES[0] || "");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   function handleCategorySelect(selectedCategory: string) {
     setCategory(selectedCategory);
-    const sectionIndex = CATEGORIES.findIndex(
+    const sectionIndex = categories.findIndex(
       (cat) => cat === selectedCategory
     );
     if (sectionListRef.current) {
@@ -35,10 +66,21 @@ export default function Menu() {
     }
   }
 
-  const sections = CATEGORIES.map((cat) => ({
+  const sections = categories.map((cat) => ({
     title: cat,
-    data: MENU.filter((product) => product.category === cat),
+    data: products.filter((product) => product.category === cat),
   }));
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <Header title="Cardápio" cartQuantityItem={cartQuantyItems} showLogout={true} />
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-gray-600">Carregando cardápio...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     // CORREÇÃO 2: Usa SafeAreaView para o layout principal
@@ -46,7 +88,7 @@ export default function Menu() {
       <Header title="Cardápio" cartQuantityItem={cartQuantyItems} showLogout={true} />
 
       <FlatList
-        data={CATEGORIES}
+        data={categories}
         keyExtractor={(item) => item}
         renderItem={({ item }) => (
           <CategoryButton
