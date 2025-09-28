@@ -24,30 +24,71 @@ export default function Register() {
   const setToken = useAuthStore((state) => state.setToken);
 
   async function handleRegister() {
-    // ... a lógica da função continua a mesma ...
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      return Alert.alert("Registro", "Por favor, preencha todos os campos.");
+    // Validações no frontend
+    if (!name.trim()) {
+      return Alert.alert("Erro", "Por favor, digite seu nome completo.");
     }
+    
+    if (name.trim().length < 2) {
+      return Alert.alert("Erro", "O nome deve ter pelo menos 2 caracteres.");
+    }
+    
+    if (!email.trim()) {
+      return Alert.alert("Erro", "Por favor, digite seu e-mail.");
+    }
+    
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return Alert.alert("Erro", "Por favor, digite um e-mail válido.");
+    }
+    
+    if (!password.trim()) {
+      return Alert.alert("Erro", "Por favor, digite uma senha.");
+    }
+    
+    if (password.length < 6) {
+      return Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
+    }
+
     setIsLoading(true);
+    
     try {
+      console.log("🔄 Tentando registrar usuário:", { name: name.trim(), email: email.trim().toLowerCase() });
+      
       const data = await fetchJson("/auth/register", {
         method: 'POST',
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ 
+          name: name.trim(), 
+          email: email.trim().toLowerCase(), 
+          password: password 
+        }),
       });
 
+      console.log("✅ Resposta do servidor:", data);
+
       if (data.token && data.user) {
+        console.log("🎉 Usuário registrado com sucesso!");
         setToken(data.token, data.user);
-        router.replace("../menu");
+        Alert.alert("Sucesso", "Conta criada com sucesso! Bem-vindo ao Café!");
+        router.replace("/menu");
       } else {
         throw new Error("Resposta inválida do servidor");
       }
 
     } catch (error: any) {
-      console.error("Erro de registro:", error);
-      if (error.message && error.message.includes('400')) {
+      console.error("❌ Erro de registro:", error);
+      
+      if (error.message && error.message.includes('Email já está em uso')) {
+        Alert.alert("Erro", "Este e-mail já está em uso. Tente outro e-mail.");
+      } else if (error.message && error.message.includes('Dados inválidos')) {
+        Alert.alert("Erro", "Dados inválidos. Verifique os campos preenchidos.");
+      } else if (error.message && error.message.includes('400')) {
         Alert.alert("Erro", "Este e-mail já está em uso. Tente outro.");
+      } else if (error.message && error.message.includes('500')) {
+        Alert.alert("Erro", "Erro interno do servidor. Tente novamente em alguns minutos.");
       } else {
-        Alert.alert("Erro", "Não foi possível criar a conta. Tente novamente.");
+        Alert.alert("Erro", "Não foi possível criar a conta. Verifique sua conexão e tente novamente.");
       }
     } finally {
       setIsLoading(false);

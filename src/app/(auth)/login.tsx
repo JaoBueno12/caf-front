@@ -26,26 +26,61 @@ export default function Login() {
   const setToken = useAuthStore((state) => state.setToken);
 
   async function handleLogin() {
-    if (!email.trim() || !password.trim()) {
-      return Alert.alert("Login", "Por favor, preencha todos os campos.");
+    // Validações no frontend
+    if (!email.trim()) {
+      return Alert.alert("Erro", "Por favor, digite seu e-mail.");
     }
+    
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return Alert.alert("Erro", "Por favor, digite um e-mail válido.");
+    }
+    
+    if (!password.trim()) {
+      return Alert.alert("Erro", "Por favor, digite sua senha.");
+    }
+
     setIsLoading(true);
+    
     try {
+      console.log("🔄 Tentando fazer login:", { email: email.trim().toLowerCase() });
+      
       const data = await fetchJson("/auth/login", {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email: email.trim().toLowerCase(), 
+          password: password 
+        }),
       });
 
+      console.log("✅ Resposta do servidor:", data);
+
       if (data.token && data.user) {
+        console.log("🎉 Login realizado com sucesso!");
         setToken(data.token, data.user);
-        router.replace("../menu");
+        Alert.alert("Sucesso", `Bem-vindo de volta, ${data.user.name}!`);
+        router.replace("/menu");
       } else {
         throw new Error("Resposta inválida do servidor");
       }
 
-    } catch (error) {
-      console.error("Erro de login:", error);
-      Alert.alert("Erro", "E-mail ou senha inválidos. Tente novamente.");
+    } catch (error: any) {
+      console.error("❌ Erro de login:", error);
+      
+      if (error.message && error.message.includes('Credenciais inválidas')) {
+        Alert.alert("Erro", "E-mail ou senha inválidos. Tente novamente.");
+      } else if (error.message && error.message.includes('Conta desativada')) {
+        Alert.alert("Erro", "Sua conta está desativada. Entre em contato com o suporte.");
+      } else if (error.message && error.message.includes('401')) {
+        Alert.alert("Erro", "E-mail ou senha inválidos. Tente novamente.");
+      } else if (error.message && error.message.includes('400')) {
+        Alert.alert("Erro", "Dados inválidos. Verifique os campos preenchidos.");
+      } else if (error.message && error.message.includes('500')) {
+        Alert.alert("Erro", "Erro interno do servidor. Tente novamente em alguns minutos.");
+      } else {
+        Alert.alert("Erro", "Não foi possível fazer login. Verifique sua conexão e tente novamente.");
+      }
     } finally {
       setIsLoading(false);
     }

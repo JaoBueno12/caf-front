@@ -1,23 +1,11 @@
 // Importa componentes básicos do React Native
-import { View, Text, ScrollView, Alert, Linking, TouchableOpacity, Image} from "react-native";
-
-// Importa componente de cabeçalho personalizado
-import { Header } from "@/components/header";
+import { View, Text, ScrollView, Alert, Linking, TouchableOpacity, Image, TextInput} from "react-native";
 
 // Importa store do carrinho (Zustand)
 import { useCartStore } from "@/stores/cart-store";
 
-// Importa componente de produto
-import { Product } from "@/components/products";
-
 // Importa função para formatar moeda
 import { formatCurrency } from "@/utils/functions/format-currency";
-
-// Importa componente de input
-import { Input } from "@/components/input";
-
-// Importa componente para scroll com teclado
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 // Importa componente de botão
 import { Button } from "@/components/button";
@@ -26,19 +14,10 @@ import { Button } from "@/components/button";
 import { Feather } from "@expo/vector-icons";
 
 // Importa componentes de navegação
-import { Link } from "expo-router";
-
-// Importa componente de botão de link
-import { LinkButton } from "@/components/link-button";
+import { Link, useRouter } from "expo-router";
 
 // Importa hook useState
 import { useState } from "react";
-
-// Importa hook de navegação
-import { useNavigation } from "expo-router";
-
-// Número de telefone para WhatsApp (placeholder)
-const PHONE_NUMBER = "***********";
 
 // Componente da tela do carrinho
 export default function Cart() {
@@ -49,7 +28,7 @@ export default function Cart() {
   const cartStore = useCartStore();
 
   // Hook para navegação
-  const navigation = useNavigation();
+  const router = useRouter();
 
   // Calcula o total do carrinho formatado em moeda
   const total = formatCurrency(
@@ -88,12 +67,12 @@ export default function Cart() {
     // Cria mensagem completa para o WhatsApp
     const message = `Novo PEDIDO!\n Entregar em ${address}${products}\n Valor Total: ${total}`;
 
-    // Abre WhatsApp com a mensagem
-    Linking.openURL(`http://api.whatsapp.com/send?phone=${PHONE_NUMBER}&text=${message}`);
+    // Abre WhatsApp com a mensagem (substitua pelo número real do estabelecimento)
+    Linking.openURL(`http://api.whatsapp.com/send?phone=551999320182&text=${message}`);
     // Limpa o carrinho
     cartStore.clear();
     // Volta para a tela anterior
-    navigation.goBack();
+    router.back();
   }
 
   return (
@@ -102,7 +81,7 @@ export default function Cart() {
       {/* Cabeçalho customizado com botão voltar e título */}
       <View className="flex-row items-center p-5 border-b border-gray-200">
         {/* Botão de voltar */}
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+        <TouchableOpacity onPress={() => router.back()} className="mr-4">
           <Feather name="arrow-left" size={24} color="#374151" />
         </TouchableOpacity>
         {/* Título da tela */}
@@ -171,6 +150,22 @@ export default function Cart() {
           <Text className="text-gray-800 text-lg font-bold">{total}</Text>
         </View>
         
+        {/* Campo de endereço */}
+        <View className="mb-4">
+          <Text className="text-gray-800 text-base font-medium mb-2">Endereço de entrega:</Text>
+          <View className="bg-gray-50 rounded-xl px-4 py-3">
+            <TextInput
+              placeholder="Digite seu endereço completo"
+              placeholderTextColor="#9CA3AF"
+              value={address}
+              onChangeText={setAddress}
+              className="text-gray-800 text-base"
+              multiline
+              numberOfLines={2}
+            />
+          </View>
+        </View>
+
         {/* Botões de ação */}
         <View className="gap-3">
           {/* Botão para finalizar pedido */}
